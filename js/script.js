@@ -1,10 +1,15 @@
-const CONFIG = Object.freeze({
+let CONFIG = {
   STREAM_URL:       'https://play.streamafrica.net/rap',
   API_URL:          'https://api.streamafrica.net/metadata/92f09a6d-37f1-4c10-bf2a-018bf03136fc',
 
-  STATION_NAME:     'RAP',
-  FALLBACK_TRACK:   'Live Broadcast',
-  FALLBACK_ARTIST:  'RAP',
+  STATION_NAME:     'RAP GLOBAL',
+  STATION_LOGO:     'https://ik.imagekit.io/boxradio/r2/radios/01KGQFV8ZWSG9BJFVSW9TWHKFW.png',            // URL to a logo image (optional)
+  BRAND_NAME:       'Radio<span class="text-[var(--primary)]">Player</span>', // HTML string for brand
+
+  PRIMARY_COLOR:    '#38f916',     // Default orange
+  ACCENT_COLOR:     '#38f916',
+  DYNAMIC_THEME:    true,          // Auto-adjust colors based on artwork
+  FALLBACK_ARTIST:  'Rap Radio',
   FALLBACK_BITRATE: '128',
   FALLBACK_FORMAT:  'MP3',
   FALLBACK_ARTWORK: 'https://ik.imagekit.io/boxradio/r2/radios/01KGQFV8ZWSG9BJFVSW9TWHKFW.png',
@@ -18,11 +23,11 @@ const CONFIG = Object.freeze({
   PROGRESS_INTERVAL_MS:  1_000,
   FETCH_TIMEOUT_MS:      8_000,
 
-  HISTORY_COMPACT_COUNT: 5,    // tracks shown in the main view
+  HISTORY_COMPACT_COUNT: 3,    // tracks shown in the main view
   COLOR_BRIGHTNESS_THRESHOLD: 125, // YIQ threshold for btn text contrast
 
   IMG_PROXY: 'https://wsrv.nl/',
-});
+};
 
 const PlayerState = Object.freeze({
   IDLE:    'IDLE',
@@ -40,14 +45,12 @@ const state = {
 
 const $ = (id) => {
   const el = document.getElementById(id);
-  if (!el) throw new Error(`Missing DOM element: #${id}`);
   return el;
 };
 
 const DOM = {
   playIcon:       $('play-icon'),
   playText:       $('play-text'),
-  liveDot:        $('live-dot'),
   visualizer:     $('visualizer'),
   mainArtwork:    $('main-artwork'),
   masterBtn:      $('master-play-btn'),
@@ -66,8 +69,10 @@ const DOM = {
   historyPanel:   $('history-panel'),
   lyricsPanel:    $('lyrics-panel'),
   blurBg:         $('blur-bg'),
-  volume:         $('volume'),
-  clock:          $('clock'),
+  dynamicBg:      $('dynamic-bg'),
+  radioLogo:      $('radio-logo'),
+  logoContainer:  $('radio-logo-container'),
+  brandName:      $('brand-name'),
 };
 
 const masterBtnContainer = DOM.masterBtn.parentElement;
@@ -106,16 +111,27 @@ async function fetchWithTimeout(url, timeoutMs = CONFIG.FETCH_TIMEOUT_MS) {
 const colorThief = new ColorThief();
 
 DOM.mainArtwork.addEventListener('load', () => {
+  if (!CONFIG.DYNAMIC_THEME) return;
   try {
     const [r, g, b] = colorThief.getColor(DOM.mainArtwork);
-    masterBtnContainer.style.backgroundColor = `rgb(${r},${g},${b})`;
-    DOM.progressShadow.style.backgroundColor = `rgba(${Math.floor(r*0.4)},${Math.floor(g*0.4)},${Math.floor(b*0.4)},0.35)`;
+    const color = `rgb(${r},${g},${b})`;
+    
+    masterBtnContainer.style.backgroundColor = color;
+    DOM.progressShadow.style.backgroundColor = `rgba(${r},${g},${b},0.4)`;
+    
+    // Update dynamic background
+    DOM.dynamicBg.style.backgroundImage = `url(${DOM.mainArtwork.src})`;
+    
+    // Update theme color
+    document.documentElement.style.setProperty('--accent', color);
+    
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
     DOM.masterBtn.style.color = brightness > CONFIG.COLOR_BRIGHTNESS_THRESHOLD ? '#000' : '#fff';
   } catch {
     masterBtnContainer.style.backgroundColor = '#ffffff';
     DOM.progressShadow.style.backgroundColor = 'rgba(0,0,0,0.1)';
     DOM.masterBtn.style.color = '#000';
+    document.documentElement.style.setProperty('--accent', '#f97316');
   }
 });
 
@@ -133,7 +149,7 @@ function startProgressLoop() {
     DOM.progressShadow.style.width = `${pct}%`;
     setText(
         DOM.progressText,
-        `${formatTime(current)} // ${formatTime(duration - current)} LEFT`,
+        `${formatTime(current)} / ${formatTime(duration)}`,
     );
   }, CONFIG.PROGRESS_INTERVAL_MS);
 }
@@ -149,31 +165,36 @@ function buildHistoryItem(item, idx, mode) {
   const wrap = document.createElement('div');
 
   if (mode === 'compact') {
-    wrap.className = 'flex items-center justify-between text-[11px] border-b border-zinc-900 pb-3';
+    wrap.className = 'flex items-center gap-4 p-3 bg-white/5 border border-white/5 rounded-sm group hover:bg-white/10 transition-all';
+
+    const img = document.createElement('img');
+    img.src = proxyImg(item.artwork || CONFIG.FALLBACK_ARTWORK, 80, 80);
+    img.className = 'w-10 h-10 object-cover rounded-sm border border-white/10';
+    img.alt = item.song;
 
     const inner = document.createElement('div');
-    inner.className = 'min-w-0 flex-1 pr-4';
+    inner.className = 'min-w-0 flex-1';
 
     const song = document.createElement('span');
-    song.className = 'font-bold text-zinc-300 block truncate uppercase line-clamp-2';
+    song.className = 'font-bold text-zinc-200 block truncate uppercase text-[12px]';
     setText(song, item.song);
 
     const artist = document.createElement('span');
-    artist.className = 'mono text-[9px] text-zinc-600 uppercase block line-clamp-1';
+    artist.className = 'mono text-[10px] text-zinc-500 uppercase block truncate';
     setText(artist, item.artist);
 
     inner.append(song, artist);
-    wrap.append(inner);
+    wrap.append(img, inner);
   } else {
-    wrap.className = 'flex gap-5 items-start border-b border-zinc-900/50 pb-6 group';
+    wrap.className = 'flex gap-6 items-start border-b border-white/5 pb-8 group last:border-0';
 
     const num = document.createElement('div');
-    num.className = 'mono text-[10px] text-zinc-800 pt-1 shrink-0';
+    num.className = 'mono text-[12px] text-zinc-800 pt-1 shrink-0';
     setText(num, String(idx).padStart(2, '0'));
 
     const img = document.createElement('img');
-    img.src       = proxyImg(item.artwork || CONFIG.FALLBACK_ARTWORK, 150, 150);
-    img.className = 'w-16 h-16 object-cover border border-zinc-800 shrink-0';
+    img.src       = proxyImg(item.artwork || CONFIG.FALLBACK_ARTWORK, 180, 180);
+    img.className = 'w-20 h-20 object-cover border border-zinc-800 shrink-0';
     img.alt       = item.song;
     img.crossOrigin = 'anonymous';
 
@@ -181,15 +202,15 @@ function buildHistoryItem(item, idx, mode) {
     info.className = 'min-w-0 flex-1';
 
     const time = document.createElement('p');
-    time.className = 'text-zinc-600 mono text-[9px] uppercase tracking-tighter mb-1';
-    setText(time, item.relative_time || 'LOGGED');
+    time.className = 'text-zinc-600 mono text-[10px] uppercase tracking-tighter mb-1';
+    setText(time, item.relative_time || 'RECENT');
 
     const title = document.createElement('h4');
-    title.className = 'font-bold text-sm text-zinc-200 uppercase leading-tight line-clamp-3';
+    title.className = 'font-bold text-base text-zinc-200 uppercase leading-tight line-clamp-3';
     setText(title, item.song);
 
     const artistEl = document.createElement('p');
-    artistEl.className = 'mono text-[10px] text-zinc-500 uppercase line-clamp-2 mt-1';
+    artistEl.className = 'mono text-[11px] text-zinc-500 uppercase line-clamp-2 mt-1';
     setText(artistEl, item.artist);
 
     info.append(time, title, artistEl);
@@ -241,6 +262,9 @@ async function fetchMetadata() {
     state.history = Array.isArray(data.history) ? data.history : [];
     renderCompactHistory();
 
+    // Update dynamic background with initial load too
+    DOM.dynamicBg.style.backgroundImage = `url(${DOM.mainArtwork.src})`;
+
   } catch (err) {
     if (err.name === 'AbortError') {
       console.warn('Metadata fetch timed out.');
@@ -287,8 +311,6 @@ function setPlayerState(next) {
 
   setText(DOM.playText, isPlaying ? CONFIG.LABEL_STOP : CONFIG.LABEL_PLAY);
 
-  toggleClasses(DOM.liveDot, isPlaying, ['bg-orange-600', 'animate-pulse'], ['bg-zinc-800']);
-
   DOM.visualizer.classList.toggle('playing', isPlaying);
 }
 
@@ -319,15 +341,49 @@ function closeAllPanels() {
   DOM.blurBg.classList.remove('open');
 }
 
-DOM.volume.addEventListener('input', () => {
-  audio.volume = Number(DOM.volume.value);
-});
 
-setInterval(() => {
-  setText(DOM.clock, new Date().toTimeString().slice(0, 8));
-}, 1000);
+function applyLogo() {
+  if (CONFIG.STATION_LOGO) {
+    DOM.radioLogo.src = CONFIG.STATION_LOGO;
+    DOM.logoContainer.classList.remove('hidden');
+  } else {
+    DOM.logoContainer.classList.add('hidden');
+  }
+}
+
+function applyBrand() {
+  if (CONFIG.BRAND_NAME) {
+    DOM.brandName.innerHTML = CONFIG.BRAND_NAME;
+  }
+}
+
+function applyColors() {
+  if (CONFIG.PRIMARY_COLOR) {
+    document.documentElement.style.setProperty('--primary', CONFIG.PRIMARY_COLOR);
+    if (!CONFIG.DYNAMIC_THEME) {
+      document.documentElement.style.setProperty('--accent', CONFIG.PRIMARY_COLOR);
+    }
+  }
+  if (CONFIG.ACCENT_COLOR) {
+    document.documentElement.style.setProperty('--accent', CONFIG.ACCENT_COLOR);
+  }
+}
+
+function applyStationName() {
+  const el = $('main-station-name');
+  const elMob = $('main-station-name-mobile');
+  if (CONFIG.STATION_NAME) {
+    if (el) setText(el, CONFIG.STATION_NAME);
+    if (elMob) setText(elMob, CONFIG.STATION_NAME);
+  }
+}
 
 window.addEventListener('load', () => {
+  applyLogo();
+  applyBrand();
+  applyColors();
+  applyStationName();
+
   DOM.mainArtwork.crossOrigin = 'anonymous';
   DOM.mainArtwork.src = proxyImg(CONFIG.FALLBACK_ARTWORK, 600, 600);
   fetchMetadata().catch(console.error);
@@ -338,3 +394,50 @@ window.togglePlayback = togglePlayback;
 window.openHistory    = openHistory;
 window.openLyrics     = openLyrics;
 window.closeAllPanels = closeAllPanels;
+
+/**
+ * PUBLIC API for Customization
+ * Usage: 
+ * RadioPlayer.configure({ 
+ *   STATION_NAME: 'New Name', 
+ *   STREAM_URL: '...',
+ *   API_URL: '...'
+ * });
+ */
+window.RadioPlayer = {
+  configure: (newConfig) => {
+    Object.assign(CONFIG, newConfig);
+    
+    // Apply visual changes immediately if applicable
+    if (newConfig.STATION_NAME) {
+      applyStationName();
+    }
+
+    if (newConfig.STATION_LOGO !== undefined) {
+      applyLogo();
+    }
+
+    if (newConfig.BRAND_NAME !== undefined) {
+      applyBrand();
+    }
+
+    if (newConfig.PRIMARY_COLOR || newConfig.ACCENT_COLOR || newConfig.DYNAMIC_THEME !== undefined) {
+      applyColors();
+    }
+    
+    if (newConfig.DEFAULT_VOLUME !== undefined) {
+      audio.volume = CONFIG.DEFAULT_VOLUME;
+    }
+    
+    if (newConfig.LABEL_PLAY || newConfig.LABEL_STOP) {
+      setPlayerState(state.player);
+    }
+
+    if (newConfig.API_URL || newConfig.STREAM_URL) {
+        state.streamLoaded = false;
+        fetchMetadata().catch(console.error);
+    }
+  },
+  getState: () => ({ ...state }),
+  getAudio: () => audio
+};

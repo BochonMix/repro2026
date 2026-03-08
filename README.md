@@ -1,20 +1,20 @@
-# HTML5 Internet Radio Player
+# RadioPlayer: Cyber-Retro Edition
 
-A modern, responsive web-based radio player with a clean interface for streaming internet radio stations.
+A high-tech, immersive web-based radio player designed with a "Cyber-Retro" aesthetic. Built with modern web technologies and a focus on visual performance, it features dynamic theming, CRT effects, and a robust JavaScript API.
 
 ![Radio Player Preview](img/imageupdate.png)
 
-## Features
+## Core Features
 
-- **Live Streaming** - Support for Icecast, Shoutcast, Zeno, and Radiojar protocols
-- **Real-time Metadata** - Display current song, artist, and album artwork
-- **Integrated Lyrics** - View lyrics for the currently playing song
-- **Playback History** - Shows recently played songs
-- **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
-- **Volume Control** - Adjustable volume slider
-- **Color Theming** - Play button dynamically adopts the artwork's dominant color
+- **Cyber-Retro Aesthetic** - CRT scanlines, glassmorphism, and industrial UI elements.
+- **Dynamic Theming** - Automatically extracts colors from album artwork to update the UI's accent colors and background.
+- **Live Metadata** - Real-time track information including Bitrate, Format, Year, and high-quality artwork.
+- **Visualizer** - Animated signal bars that respond during playback.
+- **Lyrics & History** - Dedicated sliding panels for viewing song lyrics and playback history.
+- **Developer API** - Fully customizable at runtime via a simple JavaScript interface.
+- **Responsive** - Optimized layouts for mobile receivers and desktop terminals.
 
-## Quick Start
+## Getting Started
 
 1. **Clone the repository:**
    ```bash
@@ -23,90 +23,79 @@ A modern, responsive web-based radio player with a clean interface for streaming
    ```
 
 2. **Configure your stream:**
-   - Open `js/script.js`
-   - Update the `CONFIG` object at the top of the file with your values
+   Open `js/script.js` and update the `CONFIG` object at the top.
+   - To generate a free API URL, sign up at [mad.radioapi.me](https://mad.radioapi.me/).
+   - Generate your unique API URL from their dashboard.
+   - Paste it into the `API_URL` field in the `CONFIG`.
+   - Update `STREAM_URL` with your actual radio stream.
 
 3. **Launch:**
-   - Open `index.html` in your browser — no build step required
+   Open `index.html` in any modern browser. No build steps or dependencies required.
 
 ## Configuration
 
-All configurable values live at the top of `js/script.js` in a single `CONFIG` object:
+You can configure the player by editing the `CONFIG` object in `js/script.js`:
 
 ```javascript
-const CONFIG = Object.freeze({
-  // ── Stream ──────────────────────────────────────────────────
-  STREAM_URL:       'https://your-stream-url.com/stream',
-  API_URL:          'https://your-metadata-api.com/endpoint',
+let CONFIG = {
+  STREAM_URL:   'https://your-stream.url/stream',
+  API_URL:      'https://your-metadata-api.com/metadata',
 
-  // ── Branding / fallbacks ─────────────────────────────────────
-  STATION_NAME:     'My Radio Station',
-  FALLBACK_TRACK:   'Live Broadcast',
-  FALLBACK_ARTIST:  'My Station',
-  FALLBACK_BITRATE: '128',
-  FALLBACK_FORMAT:  'MP3',
-  FALLBACK_ARTWORK: 'img/cover.png',   // shown before metadata loads
+  STATION_NAME: 'MY RADIO STATION',
+  STATION_LOGO: 'https://link-to-your-logo.png',
+  BRAND_NAME:   'Radio<span class="text-[var(--primary)]">Player</span>',
 
-  // ── Player UI labels ─────────────────────────────────────────
-  LABEL_PLAY: 'PLAY',
-  LABEL_STOP: 'STOP',
+  PRIMARY_COLOR: '#f97316', // Initial theme color
+  DYNAMIC_THEME: true,      // Set to false to use fixed colors
 
-  // ── Audio ────────────────────────────────────────────────────
-  DEFAULT_VOLUME: 0.8,   // 0.0 – 1.0
+  META_INTERVAL_MS: 15_000, // Metadata refresh rate
+};
+```
 
-  // ── Timings ──────────────────────────────────────────────────
-  META_INTERVAL_MS:     15_000,  // how often to poll metadata
-  PROGRESS_INTERVAL_MS:  1_000,  // progress bar update rate
-  FETCH_TIMEOUT_MS:      8_000,  // API request timeout
+## Public API
 
-  // ── UI behaviour ─────────────────────────────────────────────
-  HISTORY_COMPACT_COUNT:      3,  // tracks shown in the main view
-  COLOR_BRIGHTNESS_THRESHOLD: 125, // YIQ threshold for button text contrast
+The player exposes a global `RadioPlayer` object for runtime customization. This is useful for building multi-station switchers or dynamic branding.
 
-  // ── Image proxy ───────────────────────────────────────────────
-  IMG_PROXY: 'https://wsrv.nl/',
+### `RadioPlayer.configure(options)`
+Updates player settings on the fly.
+
+```javascript
+RadioPlayer.configure({
+  STATION_NAME: 'New Station Name',
+  PRIMARY_COLOR: '#38f916',
+  DYNAMIC_THEME: false
 });
 ```
 
-The fallback values (`FALLBACK_TRACK`, `FALLBACK_ARTIST`, etc.) are shown automatically when the metadata API is unavailable or returns empty fields.
+**Supported Options:**
+- `STATION_NAME` (String)
+- `STATION_LOGO` (URL String)
+- `BRAND_NAME` (HTML String)
+- `PRIMARY_COLOR` / `ACCENT_COLOR` (Hex/RGB)
+- `DYNAMIC_THEME` (Boolean)
+- `STREAM_URL` / `API_URL` (Updates stream source)
+- `DEFAULT_VOLUME` (0.0 - 1.0)
 
-## Upgrade to JC Player Pro
+### `RadioPlayer.getState()`
+Returns the current internal state of the player (track info, history, playback status).
 
-Want more features? **JC Player Pro** is available for **$79** and includes:
-
-- **Multi-Radio Support** - Manage and switch between multiple radio stations
-- **Embeddable Players** - Integrate players into any website
-- **Sticky Players** - Floating players that stay visible while scrolling
-- **Advanced Customization** - Extended theming and branding options
-- **Radio API Dashboard** - Full access to add, edit and configure radios, free hosting, custom domains
-- **API Access** - Complete API integration and support
-- **Priority Support** - Direct technical assistance
-- And much more!
-
-**Note:** This is a hosted player service with full dashboard and API access. You are purchasing access to the JC Player Pro platform, not the source code.
-
-### Live Demo
-
-Check out the player in action: [View Demo](https://1ceb9727-3e36-4e64-99e7-f776b50c7f4f.radioplayer.streamafrica.net/)
-
-### Screenshots
-
-![JC Player Pro Interface](https://ik.imagekit.io/boxradio/Screenshot%202026-02-05%20at%2011.03.32.png)
-![JC Player Pro Features](https://ik.imagekit.io/boxradio/Screenshot%202026-02-05%20at%2011.03.19.png)
-
-[Get JC Player Pro →](https://streamafrica.net/player/jcplayer)
+### `RadioPlayer.getAudio()`
+Returns the underlying HTML5 Audio object for direct control.
 
 ---
 
-## Support & Contact
+## Upgrade to RadioPlayer Pro 🚀
 
-For questions, customisation requests, or integration help:
+Looking for more features? Get **JCPlayer Pro** for advanced capabilities:
+- **Multi-Station Support** - Manage multiple streams easily.
+- **Advanced Visualizers** - Multiple styles and customization.
+- **Premium Themes** - More built-in styles and layout options.
+- **Dedicated Support** - Priority technical assistance.
 
-- **WhatsApp:** [Chat with us](https://wa.link/yn9zpy)
-- **Email:** [bankuboy@proton.me](mailto:bankuboy@proton.me)
+[Get JCPlayer Pro Now](https://streamafrica.net/player/jcplayer)
 
 ---
 
 ## License
 
-GNU Affero General Public License v3.0
+This project is licensed under the GNU Affero General Public License v3.0.
