@@ -2,7 +2,7 @@
 
 A high-tech, immersive web-based radio player designed with a "Cyber-Retro" aesthetic. Built with modern web technologies and a focus on visual performance, it features dynamic theming, CRT effects, and a robust JavaScript API.
 
-![Radio Player Preview](img/imageupdate.png)
+![Radio Player Preview](img/imageupdate.jpeg)
 
 ## Core Features
 
