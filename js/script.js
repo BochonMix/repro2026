@@ -3,16 +3,16 @@ let CONFIG = {
     API_URL: 'https://api.zeno.fm/mounts/metadata/subscribe/qpt7aehaechvv',
 
     STATION_NAME: 'BOCHONMIX',
-    STATION_LOGO: 'https://ik.imagekit.io/boxradio/r2/radios/01KGQFV8ZWSG9BJFVSW9TWHKFW.png',            // URL to a logo image (optional)
-    BRAND_NAME: 'Radio<span class="text-[var(--primary)]">Player</span>', // HTML string for brand
+    STATION_LOGO: 'https://xatimg.com/image/uphVcxJsQVcS.png',            // URL to a logo image (optional)
+    BRAND_NAME: 'BOCHON<span class="text-[var(--primary)]">MIX</span>', // HTML string for brand
 
     PRIMARY_COLOR: '#38f916',     // Default orange
     ACCENT_COLOR: '#38f916',
     DYNAMIC_THEME: true,          // Auto-adjust colors based on artwork
-    FALLBACK_ARTIST: 'Rap Radio',
+    FALLBACK_ARTIST: 'BOCHONMIX',
     FALLBACK_BITRATE: '128',
     FALLBACK_FORMAT: 'MP3',
-    FALLBACK_ARTWORK: 'https://ik.imagekit.io/boxradio/r2/radios/01KGQFV8ZWSG9BJFVSW9TWHKFW.png',
+    FALLBACK_ARTWORK: 'https://xatimg.com/image/uphVcxJsQVcS.png',
 
     LABEL_PLAY: 'PLAY',
     LABEL_STOP: 'STOP',
